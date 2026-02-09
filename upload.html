@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload - LexaTube</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+    <a href="index.html">
+        <img src="assets/logo.png" class="logo">
+    </a>
+    <div class="tabs">
+        <a href="index.html">Início</a>
+        <a href="videos.html">Vídeos</a>
+        <a href="upload.html">Upload</a>
+        <a href="sobre.html">Sobre</a>
+    </div>
+</div>
+
+<div class="container">
+    <h1>Upload de Vídeo</h1>
+
+    <input id="author" type="text" placeholder="Nome de quem postou">
+    <input id="title" type="text" placeholder="Título do vídeo">
+
+    <!-- BOTÃO ESCOLHER VÍDEO -->
+    <label class="btn file-btn">
+        Escolher vídeo
+        <input id="video" type="file" accept="video/mp4" hidden>
+    </label>
+
+    <!-- BOTÃO ESCOLHER THUMB -->
+    <label class="btn file-btn">
+        Escolher thumbnail
+        <input id="thumb" type="file" accept="image/*" hidden>
+    </label>
+
+    <!-- PREVIEW THUMB -->
+    <div>
+        <img id="thumbPreview" src="assets/nothumb.png" alt="Thumbnail Preview">
+    </div>
+
+    <button class="btn" onclick="uploadVideo()">Enviar Vídeo</button>
+    <p id="msg"></p>
+</div>
+
+<script>
+// Converte arquivo em Base64
+async function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = err => reject(err);
+        reader.readAsDataURL(file);
+    });
+}
+
+// Preview da thumbnail
+const thumbInput = document.getElementById("thumb");
+const thumbPreview = document.getElementById("thumbPreview");
+thumbInput.addEventListener("change", () => {
+    const file = thumbInput.files[0];
+    if (file) thumbPreview.src = URL.createObjectURL(file);
+    else thumbPreview.src = "assets/nothumb.png";
+});
+
+async function uploadVideo() {
+    const author = document.getElementById("author").value.trim();
+    const title = document.getElementById("title").value.trim();
+    const videoFile = document.getElementById("video").files[0];
+    const thumbFile = document.getElementById("thumb").files[0];
+    const msg = document.getElementById("msg");
+
+    if (!author || !title || !videoFile) {
+        msg.innerText = "Preencha tudo e escolha um vídeo.";
+        return;
+    }
+
+    if (videoFile.type !== "video/mp4") {
+        msg.innerText = "Apenas MP4 é permitido.";
+        return;
+    }
+
+    // Converte para Base64
+    const videoBase64 = await fileToBase64(videoFile);
+    const thumbBase64 = thumbFile ? await fileToBase64(thumbFile) : "assets/nothumb.png";
+
+    const videos = JSON.parse(localStorage.getItem("videos") || "[]");
+
+    videos.push({
+        id: Date.now(),
+        title,
+        author,
+        videoURL: videoBase64,
+        thumbURL: thumbBase64,
+        views: 0,
+        likes: 0,
+        comments: []
+    });
+
+    localStorage.setItem("videos", JSON.stringify(videos));
+
+    // Vai pra página de vídeos
+    window.location.href = "videos.html";
+}
+</script>
+
+</body>
+</html>

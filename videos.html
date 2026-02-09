@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Vídeos - LexaTube</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+    <a href="index.html">
+        <img src="assets/logo.png" class="logo">
+    </a>
+    <div class="tabs">
+        <a href="index.html">Início</a>
+        <a href="videos.html">Vídeos</a>
+        <a href="upload.html">Upload</a>
+        <a href="sobre.html">Sobre</a>
+    </div>
+</div>
+
+<div class="container">
+    <h1>Vídeos</h1>
+
+    <div>
+        <button id="recentBtn">Mais Recentes</button>
+        <button id="likedBtn">Mais Curtidos</button>
+    </div>
+
+    <div id="videoList"></div>
+</div>
+
+<script>
+const videoListDiv = document.getElementById("videoList");
+let videos = JSON.parse(localStorage.getItem("videos") || "[]");
+
+// Função para renderizar vídeos
+function renderVideos(list) {
+    if (list.length === 0) {
+        videoListDiv.innerHTML = "<p>Nenhum vídeo postado ainda.</p>";
+        return;
+    }
+
+    videoListDiv.innerHTML = "";
+    list.forEach(v => {
+        const card = document.createElement("div");
+        card.className = "video-card";
+
+        // Link pro player
+        const link = document.createElement("a");
+        link.href = `player.html?id=${v.id}`;
+
+        const thumb = document.createElement("img");
+        thumb.src = v.thumbURL || "assets/nothumb.png";
+        thumb.className = "thumb";
+        link.appendChild(thumb);
+
+        card.appendChild(link);
+
+        // Título, autor e views
+        const h3 = document.createElement("h3");
+        h3.innerText = v.title;
+        card.appendChild(h3);
+
+        const author = document.createElement("p");
+        author.innerText = v.author;
+        card.appendChild(author);
+
+        const views = document.createElement("p");
+        views.innerText = (v.views || 0) + " visualizações";
+        card.appendChild(views);
+
+        videoListDiv.appendChild(card);
+    });
+}
+
+// Botões de ordenação
+document.getElementById("recentBtn").addEventListener("click", () => {
+    const sorted = [...videos].sort((a, b) => b.id - a.id); // Mais recentes primeiro
+    renderVideos(sorted);
+});
+
+document.getElementById("likedBtn").addEventListener("click", () => {
+    const sorted = [...videos].sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    renderVideos(sorted);
+});
+
+// Renderiza por padrão os mais recentes
+document.getElementById("recentBtn").click();
+</script>
+
+</body>
+</html>

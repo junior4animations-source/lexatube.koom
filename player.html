@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Player - LexaTube</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+    <a href="index.html">
+        <img src="assets/logo.png" class="logo">
+    </a>
+    <div class="tabs">
+        <a href="index.html">Início</a>
+        <a href="videos.html">Vídeos</a>
+        <a href="upload.html">Upload</a>
+        <a href="sobre.html">Sobre</a>
+    </div>
+</div>
+
+<div class="container">
+    <video id="videoPlayer" controls autoplay></video>
+
+    <h2 id="videoTitle"></h2>
+    <p id="videoAuthor"></p>
+    <p id="videoViews"></p>
+
+    <!-- Likes -->
+    <button id="likeBtn">👍 Curtir (<span id="likeCount">0</span>)</button>
+
+    <!-- Comentários -->
+    <h3>Comentários</h3>
+    <div id="commentSection"></div>
+    <input type="text" id="commentInput" placeholder="Escreva um comentário">
+    <button onclick="addComment()">Enviar</button>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const videoId = params.get("id");
+const videos = JSON.parse(localStorage.getItem("videos") || "[]");
+const videoIndex = videos.findIndex(v => v.id == videoId);
+if (videoIndex === -1) {
+    document.querySelector(".container").innerHTML = "<p>Vídeo não encontrado.</p>";
+} else {
+    const video = videos[videoIndex];
+
+    // Views: apenas 1 por sessão
+    const watched = JSON.parse(sessionStorage.getItem("watchedVideos") || "[]");
+    if (!watched.includes(video.id)) {
+        video.views = (video.views || 0) + 1;
+        videos[videoIndex] = video;
+        localStorage.setItem("videos", JSON.stringify(videos));
+
+        watched.push(video.id);
+        sessionStorage.setItem("watchedVideos", JSON.stringify(watched));
+    }
+
+    // Carrega video e infos
+    document.getElementById("videoPlayer").src = video.videoURL;
+    document.getElementById("videoTitle").innerText = video.title;
+    document.getElementById("videoAuthor").innerText = "Por " + video.author;
+    document.getElementById("videoViews").innerText = video.views + " visualizações";
+
+    // Likes
+    const likeBtn = document.getElementById("likeBtn");
+    const likeCount = document.getElementById("likeCount");
+    likeCount.innerText = video.likes || 0;
+
+    const likedVideos = JSON.parse(localStorage.getItem("likedVideos") || "[]");
+    if (likedVideos.includes(video.id)) {
+        likeBtn.disabled = true;
+        likeBtn.innerText = `👍 Curtido (${video.likes})`;
+    }
+
+    likeBtn.addEventListener("click", () => {
+        if (!likedVideos.includes(video.id)) {
+            video.likes = (video.likes || 0) + 1;
+            videos[videoIndex] = video;
+            localStorage.setItem("videos", JSON.stringify(videos));
+
+            likedVideos.push(video.id);
+            localStorage.setItem("likedVideos", JSON.stringify(likedVideos));
+
+            likeCount.innerText = video.likes;
+            likeBtn.disabled = true;
+            likeBtn.innerText = `👍 Curtido (${video.likes})`;
+        }
+    });
+
+    // Comentários
+    const commentSection = document.getElementById("commentSection");
+    video.comments = video.comments || [];
+    function renderComments() {
+        commentSection.innerHTML = "";
+        video.comments.forEach(c => {
+            const div = document.createElement("div");
+            div.className = "comment";
+            div.innerText = c;
+            commentSection.appendChild(div);
+        });
+    }
+    renderComments();
+
+    window.addComment = function() {
+        const input = document.getElementById("commentInput");
+        const text = input.value.trim();
+        if (text) {
+            video.comments.push(text);
+            videos[videoIndex] = video;
+            localStorage.setItem("videos", JSON.stringify(videos));
+            input.value = "";
+            renderComments();
+        }
+    };
+}
+</script>
+
+</body>
+</html>
